@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WhiteLagoon.Application.Services.Implementation;
+using WhiteLagoon.Application.Services.Interface;
 using WhiteLagoon.Domain.Entities;
 using WhiteLagoon.Infrastructure.Data;
 
@@ -6,14 +8,14 @@ namespace WhiteLagoon.Web.Controllers
 {
     public class VillaController : Controller
     {
-        private readonly ApplicationDbContext _db;
-        public VillaController(ApplicationDbContext db)
+        private readonly IVillaService _villaService;
+        public VillaController(IVillaService villaService)
         {
-             _db = db;
+            _villaService = villaService;
         }
         public IActionResult Index()
         {
-            var villas = _db.Villas.ToList();
+            var villas = _villaService.GetAllVillas();
             return View(villas);
         }
 
@@ -26,8 +28,7 @@ namespace WhiteLagoon.Web.Controllers
         {
             if (ModelState.IsValid) 
             {
-                _db.Villas.Add(villa);
-                _db.SaveChanges();
+                _villaService.CreateVilla(villa);
                 TempData["success"] = "The Villa has been created Successfully.";
                 return RedirectToAction(nameof(Index));
             }
@@ -37,7 +38,7 @@ namespace WhiteLagoon.Web.Controllers
 
         public IActionResult Edit(int id)
         {
-            var villa = _db.Villas.FirstOrDefault(x => x.Id == id);
+            var villa = _villaService.GetVillaById(id);
             if(villa == null)
             {
                 return RedirectToAction("Error", "Home");
@@ -49,8 +50,7 @@ namespace WhiteLagoon.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.Villas.Update(villa);
-                _db.SaveChanges();
+                _villaService.UpdateVilla(villa);
                 TempData["success"] = "The Villa has been updated Successfully.";
                 return RedirectToAction(nameof(Index));
             }
@@ -59,18 +59,25 @@ namespace WhiteLagoon.Web.Controllers
 
         public IActionResult Delete(int id)
         {
-            var villa = _db.Villas.FirstOrDefault(x => x.Id == id);
+            var villa = _villaService.GetVillaById(id);
+            if (villa == null)
+            {
+                return RedirectToAction("Error", "Home");
+            }
             return View(villa);
         }
         [HttpPost]
         public IActionResult Delete(Villa villa)
         {
-            if(villa is not null)
+            if(villa != null)
             {
-                _db.Villas.Remove(villa);
-                _db.SaveChanges();
+                _villaService.DeleteVilla(villa.Id);
                 TempData["success"] = "The Villa has been deleted Successfully.";
                 return RedirectToAction(nameof(Index));
+            }
+            else
+            {
+                TempData["error"] = "Failed to delete the villa.";
             }
             return View(villa);
         }

@@ -5,6 +5,7 @@ using WhiteLagoon.Application.Common.Utility;
 using WhiteLagoon.Domain.Entities;
 //using WhiteLagoon.Web.Areas.Identity.Pages.Account;
 using WhiteLagoon.Web.ViewModels;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WhiteLagoon.Web.Controllers
 {
@@ -39,7 +40,7 @@ namespace WhiteLagoon.Web.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("Login", "Account");
         }
 
         public IActionResult AccessDenied()
@@ -137,7 +138,7 @@ namespace WhiteLagoon.Web.Controllers
                     var user = await _userManager.FindByEmailAsync(loginVM.Email);
                     if (await _userManager.IsInRoleAsync(user, SD.Role_Admin))
                     {
-                        return RedirectToAction("Index", "Dashboard");
+                        return RedirectToAction("Index", "Home");
                     }
                     else
                     {

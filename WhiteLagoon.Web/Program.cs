@@ -23,9 +23,9 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
 
-    options.LoginPath = "/Identity/Account/Login";
-    options.LogoutPath = $"/Identity/Account/Logout";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.LoginPath = "/Account/Login";
+    //options.LogoutPath = $"/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
     options.SlidingExpiration = true;
 });
 
@@ -51,11 +51,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 SeedDatabase();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Account}/{action=Login}/{id?}");
 
 app.Run();
 

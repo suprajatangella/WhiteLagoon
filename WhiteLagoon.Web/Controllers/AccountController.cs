@@ -140,6 +140,10 @@ namespace WhiteLagoon.Web.Controllers
                     {
                         return RedirectToAction("Index", "Home");
                     }
+                    else if (await _userManager.IsInRoleAsync(user, SD.Role_Customer))
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
                     else
                     {
                         if (string.IsNullOrEmpty(loginVM.RedirectUrl))

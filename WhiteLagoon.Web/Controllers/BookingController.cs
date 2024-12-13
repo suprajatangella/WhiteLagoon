@@ -10,6 +10,7 @@ using Syncfusion.Pdf;
 using System.IO;
 using System.Security.Claims;
 using WhiteLagoon.Application.Common.Utility;
+using WhiteLagoon.Application.Contract;
 using WhiteLagoon.Application.Services.Interface;
 using WhiteLagoon.Domain.Entities;
 
@@ -23,12 +24,14 @@ namespace WhiteLagoon.Web.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IVillaNumberService _villaNumberService;
         private readonly IPaymentService _paymentService;
+        private readonly IEmailService _emailService;
         public BookingController(IBookingService bookingService,
             IWebHostEnvironment webHostEnvironment,
             IVillaService villaService,
             UserManager<ApplicationUser> userManager,
             IVillaNumberService villaNumberService,
-            IPaymentService paymentService)
+            IPaymentService paymentService,
+            IEmailService emailService)
         {
             _bookingService = bookingService;
             _webHostEnvironment = webHostEnvironment;
@@ -36,6 +39,7 @@ namespace WhiteLagoon.Web.Controllers
             _userManager = userManager;
             _villaNumberService = villaNumberService;
             _paymentService = paymentService;
+            _emailService = emailService;
         }
         [Authorize]
         public IActionResult Index()
@@ -121,28 +125,28 @@ namespace WhiteLagoon.Web.Controllers
                     _bookingService.UpdateStatus(bookingFromDb.Id, SD.StatusApproved, 0);
                     _bookingService.UpdateStripePaymentID(bookingFromDb.Id, session.Id, session.PaymentIntentId);
 
-                    //_emailService.SendEmailAsync(bookingFromDb.Email, "Booking Confirmation - White Lagoon", "<p>Your booking has been confirmed. Booking ID - " + bookingFromDb.Id + "</p>");
+                    _emailService.SendEmailAsync("supraja.tangella@gmail.com", "mounika.chittemsetty@gmail.com"/*bookingFromDb.Email""*/, "Booking Confirmation - White Lagoon", "<p>Your booking has been confirmed. Booking ID - " + bookingFromDb.Id + "</p>");
                 }
             }
 
             return View(bookingId);
         }
 
-        //[Authorize]
-        //public IActionResult BookingDetails(int bookingId)
-        //{
-        //    Booking bookingFromDb = _bookingService.GetBookingById(bookingId);
+        [Authorize]
+        public IActionResult BookingDetails(int bookingId)
+        {
+            Booking bookingFromDb = _bookingService.GetBookingById(bookingId);
 
-        //    if (bookingFromDb.VillaNumber == 0 && bookingFromDb.Status == SD.StatusApproved)
-        //    {
-        //        var availableVillaNumber = AssignAvailableVillaNumberByVilla(bookingFromDb.VillaId);
+            if (bookingFromDb.VillaNumber == 0 && bookingFromDb.Status == SD.StatusApproved)
+            {
+                var availableVillaNumber = AssignAvailableVillaNumberByVilla(bookingFromDb.VillaId);
 
-        //        bookingFromDb.VillaNumbers = _villaNumberService.GetAllVillaNumbers().Where(u => u.VillaId == bookingFromDb.VillaId
-        //        && availableVillaNumber.Any(x => x == u.Villa_Number)).ToList();
-        //    }
+                bookingFromDb.VillaNumbers = _villaNumberService.GetAllVillaNumbers().Where(u => u.VillaId == bookingFromDb.VillaId
+                && availableVillaNumber.Any(x => x == u.Villa_Number)).ToList();
+            }
 
-        //    return View(bookingFromDb);
-        //}
+            return View(bookingFromDb);
+        }
 
 
         [HttpPost]
@@ -276,5 +280,47 @@ namespace WhiteLagoon.Web.Controllers
                 return File(stream, "application/pdf", "BookingDetails.pdf");
             }
         }
+        private List<int> AssignAvailableVillaNumberByVilla(int villaId)
+        {
+            List<int> availableVillaNumbers = new();
+
+            var villaNumbers = _villaNumberService.GetAllVillaNumbers().Where(u => u.VillaId == villaId);
+
+            var checkedInVilla = _bookingService.GetCheckedInVillaNumbers(villaId);
+
+            foreach (var villaNumber in villaNumbers)
+            {
+                if (!checkedInVilla.Contains(villaNumber.Villa_Number))
+                {
+                    availableVillaNumbers.Add(villaNumber.Villa_Number);
+                }
+            }
+            return availableVillaNumbers;
+        }
+
+        #region API Calls
+        [HttpGet]
+        [Authorize]
+        public IActionResult GetAll(string status)
+        {
+            IEnumerable<Booking> objBookings;
+            string userId = "";
+            if (string.IsNullOrEmpty(status))
+            {
+                status = "";
+            }
+
+            if (!User.IsInRole(SD.Role_Admin))
+            {
+                var claimsIdentity = (ClaimsIdentity)User.Identity;
+                userId = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value;
+            }
+
+            objBookings = _bookingService.GetAllBookings(userId, status);
+
+            return Json(new { data = objBookings });
+        }
+
+        #endregion
     }
 }

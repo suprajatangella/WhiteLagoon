@@ -31,7 +31,7 @@ namespace WhiteLagoon.Application.Services.Implementation
             if (!string.IsNullOrEmpty(statusFilterList) && !string.IsNullOrEmpty(userId))
             {
                 return _unitOfWork.Booking.GetAll(u => statusList.Contains(u.Status.ToLower()) 
-                //&&  u.UserId == userId
+                &&  u.UserId == userId
                 , includeProperties: "User,Villa");
             }
             else
@@ -43,7 +43,7 @@ namespace WhiteLagoon.Application.Services.Implementation
                 if (!string.IsNullOrEmpty(userId))
                 {
                     return _unitOfWork.Booking.GetAll(
-                        //u => u.UserId == userId,
+                        u => u.UserId == userId,
                         includeProperties: "User,Villa");
                 }
             }

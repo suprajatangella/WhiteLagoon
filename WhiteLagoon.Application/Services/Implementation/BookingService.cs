@@ -21,7 +21,6 @@ namespace WhiteLagoon.Application.Services.Implementation
         {
             _unitOfWork.Booking.Add(booking);
             _unitOfWork.Save();
-            //throw new NotImplementedException();
         }
 
         public IEnumerable<Booking> GetAllBookings(string userId = "", string statusFilterList = "")
